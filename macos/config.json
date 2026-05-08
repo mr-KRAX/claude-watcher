@@ -1,0 +1,4 @@
+{
+  "_comment": "Optional: set serial_port to override auto-detection. Leave empty string to auto-detect.",
+  "serial_port": ""
+}

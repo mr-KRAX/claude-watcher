@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+venv/
+
+# Superpowers
+.superpowers/
+
+# macOS
+.DS_Store
+
+# Arduino build artifacts
+esp32/claude_watcher/build/
