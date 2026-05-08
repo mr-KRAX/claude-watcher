@@ -28,17 +28,17 @@ def make_entry(script):
 
 # PreToolUse — match all tools
 pre = hooks.setdefault("PreToolUse", [])
-if not any(e.get("hooks", [{}])[0].get("command", "").endswith("on_pre_tool.py") for e in pre):
+if not any(next(iter(e.get("hooks") or []), {}).get("command", "").endswith("on_pre_tool.py") for e in pre):
     pre.append(make_entry("on_pre_tool.py"))
 
 # Stop
 stop = hooks.setdefault("Stop", [])
-if not any(e.get("hooks", [{}])[0].get("command", "").endswith("on_stop.py") for e in stop):
+if not any(next(iter(e.get("hooks") or []), {}).get("command", "").endswith("on_stop.py") for e in stop):
     stop.append(make_entry("on_stop.py"))
 
 # Notification
 notif = hooks.setdefault("Notification", [])
-if not any(e.get("hooks", [{}])[0].get("command", "").endswith("on_notification.py") for e in notif):
+if not any(next(iter(e.get("hooks") or []), {}).get("command", "").endswith("on_notification.py") for e in notif):
     notif.append(make_entry("on_notification.py"))
 
 with open(settings_path, "w") as f:
