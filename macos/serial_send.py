@@ -3,7 +3,11 @@ import json
 import os
 import sys
 
-import serial
+try:
+    import serial
+    _serial_available = True
+except ImportError:
+    _serial_available = False
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
 BAUD_RATE = 115200
@@ -31,7 +35,10 @@ def find_port():
 
 
 def send(message):
-    """Send a newline-terminated message to the ESP32. Silent fail if no port."""
+    """Send a newline-terminated message to the ESP32. Silent fail if no port or pyserial missing."""
+    if not _serial_available:
+        print("claude-watcher: pyserial not installed (pip install pyserial)", file=sys.stderr)
+        return
     port = find_port()
     if not port:
         print("claude-watcher: no serial port found", file=sys.stderr)
