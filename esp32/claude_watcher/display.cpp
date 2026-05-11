@@ -53,18 +53,21 @@ static void drawBang(TFT_eSPI& tft, bool visible) {
 }
 
 // Draw or erase floating "z" for IDLE state
-static void drawZzz(TFT_eSPI& tft, uint8_t offset) {
-  // Erase old z
+static void drawZzz(TFT_eSPI& tft, uint8_t newOffset, uint8_t prevOffset) {
+  // Erase z's at previous offset positions
   tft.setTextColor(COLOR_BG, COLOR_BG);
   tft.setTextFont(2);
   tft.setTextDatum(TL_DATUM);
   for (int i = 0; i < 3; i++) {
-    tft.drawString("z", SPRITE_X + SPRITE_W + 4, SPRITE_Y + 10 + i * 10);
+    int y = SPRITE_Y + 30 - (prevOffset * 10) - (i * 10);
+    if (y >= SPRITE_Y && y < SPRITE_Y + SPRITE_H_PX) {
+      tft.drawString("z", SPRITE_X + SPRITE_W + 4, y);
+    }
   }
-  // Draw new z at offset (drifts upward: offset 0=bottom, wraps at 4)
+  // Draw new z at new offset (drifts upward: offset 0=bottom, wraps at 4)
   tft.setTextColor(COLOR_ZZZ, COLOR_BG);
   for (int i = 0; i < 3; i++) {
-    int y = SPRITE_Y + 30 - (offset * 10) - (i * 10);
+    int y = SPRITE_Y + 30 - (newOffset * 10) - (i * 10);
     if (y >= SPRITE_Y && y < SPRITE_Y + SPRITE_H_PX) {
       tft.drawString("z", SPRITE_X + SPRITE_W + 4, y);
     }
@@ -122,7 +125,7 @@ void displayInit(TFT_eSPI& tft) {
   tft.drawFastHLine(0, STATUS_Y - 1, SCREEN_W, 0x2104);  // dark grey
 
   drawSprite(tft, (const char**)IDLE_F);
-  drawZzz(tft, 0);
+  drawZzz(tft, 0, 0);
   drawStatusBar(tft, State::IDLE, "");
 }
 
@@ -163,14 +166,19 @@ void displayUpdate(TFT_eSPI& tft, State state, const char* toolName, uint32_t no
     case State::WAITING:
     case State::WAITING_URGENT:
       drawSprite(tft, (const char**)WAITING_F);
-      bangVisible = !bangVisible;
-      drawBang(tft, bangVisible);
+      if (frameTick) {
+        bangVisible = !bangVisible;
+        drawBang(tft, bangVisible);
+      }
       break;
 
     case State::IDLE:
       drawSprite(tft, (const char**)IDLE_F);
-      zOffset = (zOffset + 1) % 4;
-      drawZzz(tft, zOffset);
+      {
+        uint8_t prevOffset = zOffset;
+        zOffset = (zOffset + 1) % 4;
+        drawZzz(tft, zOffset, prevOffset);
+      }
       break;
   }
 }
