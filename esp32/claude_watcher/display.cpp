@@ -1,8 +1,6 @@
 #include "display.h"
 #include "crab_sprites.h"
 #include <string.h>
-#include <Fonts/GFXFF/FreeMonoBold18pt7b.h>
-#include <Fonts/GFXFF/FreeMonoBold12pt7b.h>
 
 // Animation intervals (ms)
 #define ANIM_WORKING_MS   300
