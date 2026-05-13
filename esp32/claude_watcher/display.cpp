@@ -57,13 +57,27 @@ static void drawSprite(TFT_eSPI& tft, const char** spriteRows) {
 
 // ── Draw/erase the "!" above the crab for WAITING state ───────────────────
 static void drawBang(TFT_eSPI& tft, bool visible) {
-  int x = tft.width() / 2;
-  int y = spriteY(tft) - 28;
-  tft.setTextColor(visible ? COLOR_ALERT : COLOR_BG, COLOR_BG);
+  uint16_t color = visible ? COLOR_ALERT : COLOR_BG;
+  tft.setTextColor(color, COLOR_BG);
   tft.setTextFont(4);
   tft.setTextSize(2);
   tft.setTextDatum(TC_DATUM);
-  tft.drawString("!", x, y);
+
+  bool horiz = (tft.getRotation() % 2 == 1);
+  if (horiz) {
+    int sx   = spriteX(tft);
+    int sy   = spriteY(tft);
+    int midY = sy + SPRITE_H_PX / 2;
+    // Center each ! in the gap between crab and screen edge
+    int rightX = sx + SPRITE_W + (tft.width() - sx - SPRITE_W) / 2;
+    int leftX  = sx / 2;
+    tft.drawString("!", rightX, midY);
+    tft.drawString("!", leftX,  midY);
+  } else {
+    int x = tft.width() / 2;
+    int y = spriteY(tft) - 28;
+    tft.drawString("!", x, y);
+  }
   tft.setTextSize(1);
 }
 
