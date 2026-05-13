@@ -5,7 +5,8 @@
 #define SERVICE_UUID "12345678-1234-1234-1234-123456789abc"
 #define CHAR_UUID    "12345678-1234-1234-1234-123456789abd"
 
-static BLEStateCallback g_callback = nullptr;
+static BLEStateCallback g_stateCallback = nullptr;
+static BLENotifCallback g_notifCallback = nullptr;
 
 class CharCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& connInfo) override {
@@ -13,12 +14,15 @@ class CharCallbacks : public NimBLECharacteristicCallbacks {
         String val(raw.c_str());
         Serial.println("[BLE] " + val);
 
-        if (!g_callback) return;
+        if (isNotification(val)) {
+            if (g_notifCallback) g_notifCallback();
+            return;
+        }
 
         State newState = State::IDLE;
         char toolName[32] = "";
         if (parseMessage(val, &newState, toolName, sizeof(toolName))) {
-            g_callback(newState, toolName);
+            if (g_stateCallback) g_stateCallback(newState, toolName);
         }
     }
 };
@@ -30,8 +34,9 @@ class ServerCallbacks : public NimBLEServerCallbacks {
     }
 };
 
-void bleInit(BLEStateCallback callback) {
-    g_callback = callback;
+void bleInit(BLEStateCallback stateCallback, BLENotifCallback notifCallback) {
+    g_stateCallback = stateCallback;
+    g_notifCallback = notifCallback;
 
     NimBLEDevice::init("ClaudeWatcher");
 
@@ -42,7 +47,7 @@ void bleInit(BLEStateCallback callback) {
 
     NimBLECharacteristic* pChar = pService->createCharacteristic(
         CHAR_UUID,
-        NIMBLE_PROPERTY::WRITE_NR   // write without response
+        NIMBLE_PROPERTY::WRITE_NR
     );
     pChar->setCallbacks(new CharCallbacks());
 
