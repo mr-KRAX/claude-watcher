@@ -9,8 +9,11 @@ import ipc_send
 
 def main():
     payload = json.loads(sys.stdin.read())
-    tool_name = payload.get("tool_name", "Unknown")
-    ipc_send.send(f"WORKING:{tool_name}")
+    ipc_send.send(
+        "PreToolUse",
+        session_id=payload.get("session_id", ""),
+        tool_name=payload.get("tool_name", "Unknown"),
+    )
 
 
 if __name__ == "__main__":

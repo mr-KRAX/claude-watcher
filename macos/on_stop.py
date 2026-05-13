@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import os
 import sys
 
@@ -7,8 +8,8 @@ import ipc_send
 
 
 def main():
-    sys.stdin.read()  # consume stdin
-    ipc_send.send("WAITING")
+    payload = json.loads(sys.stdin.read())
+    ipc_send.send("Stop", session_id=payload.get("session_id", ""))
 
 
 if __name__ == "__main__":

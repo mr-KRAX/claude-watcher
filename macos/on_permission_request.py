@@ -9,7 +9,7 @@ import ipc_send
 
 def main():
     payload = json.loads(sys.stdin.read())
-    ipc_send.send("Notification", session_id=payload.get("session_id", ""))
+    ipc_send.send("PermissionRequest", session_id=payload.get("session_id", ""))
 
 
 if __name__ == "__main__":

@@ -27,7 +27,7 @@ class IPCServer:
 
     def _handle(self, conn):
         with conn:
-            data = conn.recv(256)
+            data = conn.recv(1024)
             if data:
                 msg = data.decode("utf-8", errors="ignore").strip()
                 if msg:

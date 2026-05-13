@@ -1,4 +1,5 @@
 # macos/ClaudeWatcher/app.py
+import json
 import queue
 
 import rumps
@@ -8,8 +9,17 @@ from ClaudeWatcher.ipc_server import IPCServer
 
 _STATE_ICONS = {
     "WORKING": "🦀",
-    "WAITING": "🦀",
+    "WAITING": "👀",
     "IDLE":    "💤",
+}
+
+# Maps hook event name → (display state, BLE message)
+_HOOK_MAP = {
+    "Stop":              ("IDLE",    "IDLE"),
+    "Notification":      ("WAITING", "WAITING"),
+    "PermissionRequest": ("WAITING", "WAITING"),
+    "PostToolUse":       ("WORKING", "WORKING"),
+    "UserPromptSubmit":  ("WORKING", "WORKING"),
 }
 
 
@@ -35,22 +45,31 @@ class ClaudeWatcherApp(rumps.App):
     # ── Background-thread callbacks (write plain vars only) ──────────────────
 
     def _on_message(self, msg: str):
-        if msg.startswith("WORKING:"):
+        try:
+            data = json.loads(msg)
+        except (json.JSONDecodeError, ValueError):
+            return
+
+        hook = data.get("hook", "")
+
+        if hook == "PreToolUse":
+            tool = data.get("tool_name", "")
             self._state_label = "WORKING"
-            self._tool_label  = msg[8:]
-        elif msg in ("WAITING", "WAITING_URGENT"):
-            self._state_label = "WAITING"
+            self._tool_label  = tool
+            ble_msg = f"WORKING:{tool}" if tool else "WORKING"
+        elif hook in _HOOK_MAP:
+            state, ble_msg = _HOOK_MAP[hook]
+            self._state_label = state
             self._tool_label  = ""
-        elif msg == "IDLE":
-            self._state_label = "IDLE"
-            self._tool_label  = ""
+        else:
+            return
 
         # Keep only the latest message in the queue
         try:
             self._msg_queue.get_nowait()
         except queue.Empty:
             pass
-        self._msg_queue.put_nowait(msg)
+        self._msg_queue.put_nowait(ble_msg)
 
     def _on_ble_status(self, status: str):
         self._ble_status = status
