@@ -5,7 +5,7 @@ bool parseMessage(const String& msg, State* state, char* toolName, size_t toolNa
   String trimmed = msg;
   trimmed.trim();
 
-  if (trimmed.startsWith("WORKING:")) {
+  if (trimmed.startsWith("WORKING")) {
     *state = State::WORKING;
     String tool = trimmed.substring(8);  // after "WORKING:"
     strncpy(toolName, tool.c_str(), toolNameLen - 1);
@@ -32,4 +32,10 @@ bool parseMessage(const String& msg, State* state, char* toolName, size_t toolNa
   }
 
   return false;  // unknown message — ignored
+}
+
+bool isNotification(const String& msg) {
+  String trimmed = msg;
+  trimmed.trim();
+  return trimmed == "NOTIFICATION";
 }
