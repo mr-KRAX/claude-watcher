@@ -4,13 +4,13 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import serial_send
+import ipc_send
 
 
 def main():
     payload = json.loads(sys.stdin.read())
     tool_name = payload.get("tool_name", "Unknown")
-    serial_send.send(f"WORKING:{tool_name}")
+    ipc_send.send(f"WORKING:{tool_name}")
 
 
 if __name__ == "__main__":
