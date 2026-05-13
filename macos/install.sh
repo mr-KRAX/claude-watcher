@@ -4,8 +4,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "==> Installing dependencies..."
-python3 -m venv .venv
-source .venv/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 pip install -q -r requirements.txt
 
 echo "==> Building ClaudeWatcher.app..."
