@@ -26,7 +26,7 @@ _STATE_ICONS = {
 # Maps hook event name → (display state, BLE message)
 _HOOK_MAP = {
     "Stop":              ("IDLE",    "IDLE"),
-    "Notification":      ("WAITING", "WAITING"),
+    "Notification":      ("WAITING", "NOTIFICATION"),
     "PermissionRequest": ("WAITING", "WAITING"),
     "PostToolUse":       ("WORKING", "WORKING"),
     "UserPromptSubmit":  ("WORKING", "WORKING"),
