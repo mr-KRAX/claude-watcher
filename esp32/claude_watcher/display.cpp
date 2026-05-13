@@ -12,7 +12,7 @@ static State      lastState     = State::IDLE;
 static uint8_t    frame         = 0;
 static uint32_t   lastFrameMs   = 0;
 static bool       bangVisible   = false;
-static uint8_t    zOffset       = 0;
+static uint16_t   zPos          = 0;
 static char       lastTool[32]  = "";
 static bool       lastNotifFrame = false;
 
@@ -68,34 +68,46 @@ static void drawBang(TFT_eSPI& tft, bool visible) {
 }
 
 // ── Draw/erase floating "z"s for IDLE state ───────────────────────────────
-// z's drift upward; offset cycles 0-3.
-#define ZZZ_STEP  22   // vertical px between z's (font2×2 = ~32px, step slightly less)
-#define ZZZ_COUNT  3
+#define ZZZ_STEP   22
+#define ZZZ_COUNT   3
+// ZZZ_CYCLE: long enough for all z's to complete travel.
+// Last z (i=2) exits top when zPos ≈ SPRITE_H_PX + 2*ZZZ_STEP ≈ 110.
+// 132 adds a short pause before restart.
+#define ZZZ_CYCLE  132
 
-static void drawZzz(TFT_eSPI& tft, uint8_t newOffset, uint8_t prevOffset) {
-  int sx = spriteX(tft);
-  int sy = spriteY(tft);
-  int zx = sx + SPRITE_W + 4;
-  int baseY = sy + SPRITE_H_PX - 4;
+static void drawZzz(TFT_eSPI& tft, uint16_t newPos, uint16_t prevPos) {
+  int sx     = spriteX(tft);
+  int sy     = spriteY(tft);
+  int rightX = sx + SPRITE_W + 4;
+  int leftX  = sx - 18;   // TL_DATUM; ~14px wide char, 4px gap from crab
+  int baseY  = sy + SPRITE_H_PX - 4;
+  bool horiz = (tft.getRotation() % 2 == 1);
 
-  // Erase previous positions
-  tft.setTextColor(COLOR_BG, COLOR_BG);
   tft.setTextFont(2);
   tft.setTextSize(2);
   tft.setTextDatum(TL_DATUM);
+
+  // Erase previous positions
+  tft.setTextColor(COLOR_BG, COLOR_BG);
   for (int i = 0; i < ZZZ_COUNT; i++) {
-    int y = baseY - (prevOffset * ZZZ_STEP) - (i * ZZZ_STEP);
+    int yOff = (int)prevPos - i * ZZZ_STEP;
+    if (yOff < 0) continue;
+    int y = baseY - yOff;
     if (y >= sy && y < sy + SPRITE_H_PX) {
-      tft.drawString("z", zx, y);
+      tft.drawString("z", rightX, y);
+      if (horiz) tft.drawString("z", leftX, y);
     }
   }
 
   // Draw at new positions
   tft.setTextColor(COLOR_ZZZ, COLOR_BG);
   for (int i = 0; i < ZZZ_COUNT; i++) {
-    int y = baseY - (newOffset * ZZZ_STEP) - (i * ZZZ_STEP);
+    int yOff = (int)newPos - i * ZZZ_STEP;
+    if (yOff < 0) continue;
+    int y = baseY - yOff;
     if (y >= sy && y < sy + SPRITE_H_PX) {
-      tft.drawString("z", zx, y);
+      tft.drawString("z", rightX, y);
+      if (horiz) tft.drawString("z", leftX, y);
     }
   }
   tft.setTextSize(1);
@@ -184,7 +196,7 @@ void displaySetRotation(TFT_eSPI& tft, uint8_t rotation, State state, const char
   tft.drawFastHLine(0, statusY(tft) - 1, tft.width(), 0x2104);
   frame = 0;
   bangVisible = false;
-  zOffset = 0;
+  zPos = 0;
   lastNotifFrame = false;
   lastState = state;
   strncpy(lastTool, toolName, sizeof(lastTool) - 1);
@@ -220,7 +232,7 @@ void displayUpdate(TFT_eSPI& tft, State state, const char* toolName, uint32_t no
     tft.fillRect(0, 0, tft.width(), crabAreaH(tft), COLOR_BG);
     frame = 0;
     bangVisible = false;
-    zOffset = 0;
+    zPos = 0;
     drawStatusBar(tft, state, toolName);
     lastState = state;
     strncpy(lastTool, toolName, sizeof(lastTool) - 1);
@@ -250,9 +262,9 @@ void displayUpdate(TFT_eSPI& tft, State state, const char* toolName, uint32_t no
     case State::IDLE:
       drawSprite(tft, (const char**)IDLE_F);
       {
-        uint8_t prevOffset = zOffset;
-        zOffset = (zOffset + 1) % 4;
-        drawZzz(tft, zOffset, prevOffset);
+        uint16_t prevPos = zPos;
+        zPos = (zPos + 1) % ZZZ_CYCLE;
+        drawZzz(tft, zPos, prevPos);
       }
       break;
   }
