@@ -144,30 +144,30 @@ static void drawStatusBar(TFT_eSPI& tft, State state, const char* toolName) {
   switch (state) {
     case State::WORKING: {
       tft.setTextColor(COLOR_CRAB, COLOR_BG);
-      tft.drawString("WORKING", cx, sy + 4);
+      tft.drawString("WORKING", cx, sy - 6);
 
       tft.setFreeFont(&FreeMonoBold12pt7b);
       static const char* SPINNER[] = {"|", "/", "-", "\\"};
       String toolLine = String(SPINNER[frame % 4]) + " " + String(toolName);
       tft.setTextColor(COLOR_GREEN, COLOR_BG);
-      tft.drawString(toolLine.c_str(), cx, sy + 40);
+      tft.drawString(toolLine.c_str(), cx, sy + 30);
       break;
     }
     case State::WAITING:
     case State::WAITING_URGENT: {
       tft.setTextColor(COLOR_AMBER, COLOR_BG);
-      tft.drawString("WAITING", cx, sy + 4);
+      tft.drawString("WAITING", cx, sy - 6);
       tft.setFreeFont(&FreeMonoBold12pt7b);
       tft.setTextColor(COLOR_AMBER, COLOR_BG);
-      tft.drawString("needs your input", cx, sy + 40);
+      tft.drawString("needs your input", cx, sy + 30);
       break;
     }
     case State::IDLE: {
       tft.setTextColor(COLOR_ZZZ, COLOR_BG);
-      tft.drawString("IDLE", cx, sy + 4);
+      tft.drawString("IDLE", cx, sy - 6);
       tft.setFreeFont(&FreeMonoBold12pt7b);
       tft.setTextColor(0x4444, COLOR_BG);
-      tft.drawString("sleeping...", cx, sy + 40);
+      tft.drawString("sleeping...", cx, sy + 30);
       break;
     }
   }
