@@ -1,8 +1,18 @@
 # macos/ClaudeWatcher/app.py
 import json
+import logging
+import os
 import queue
 
 import rumps
+
+logging.basicConfig(
+    filename=os.path.expanduser("~/Library/Logs/ClaudeWatcher.log"),
+    level=logging.INFO,
+    format="%(asctime)s  %(message)s",
+    datefmt="%H:%M:%S",
+)
+_log = logging.getLogger(__name__)
 
 from ClaudeWatcher.ble_manager import BLEManager
 from ClaudeWatcher.ipc_server import IPCServer
@@ -56,17 +66,17 @@ class ClaudeWatcherApp(rumps.App):
 
         if hook == "PreToolUse":
             tool = data.get("tool_name", "")
-            print(f"[app] {hook} tool={tool} session={sid}")
+            _log.info("[app] %s tool=%s session=%s", hook, tool, sid)
             self._state_label = "WORKING"
             self._tool_label  = tool
             ble_msg = f"WORKING:{tool}" if tool else "WORKING"
         elif hook in _HOOK_MAP:
             state, ble_msg = _HOOK_MAP[hook]
-            print(f"[app] {hook} → {ble_msg} session={sid}")
+            _log.info("[app] %s → %s session=%s", hook, ble_msg, sid)
             self._state_label = state
             self._tool_label  = ""
         else:
-            print(f"[app] unknown hook={hook!r} session={sid}")
+            _log.warning("[app] unknown hook=%r session=%s", hook, sid)
             return
 
         # Keep only the latest message in the queue
