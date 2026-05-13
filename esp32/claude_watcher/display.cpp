@@ -1,6 +1,8 @@
 #include "display.h"
 #include "crab_sprites.h"
 #include <string.h>
+#include <Fonts/GFXFF/FreeMonoBold18pt7b.h>
+#include <Fonts/GFXFF/FreeMonoBold12pt7b.h>
 
 // Animation intervals (ms)
 #define ANIM_WORKING_MS   300
@@ -82,12 +84,10 @@ static void drawBang(TFT_eSPI& tft, bool visible) {
 }
 
 // ── Draw/erase floating "z"s for IDLE state ───────────────────────────────
-#define ZZZ_STEP   22
+#define ZZZ_STEP   28   // > z glyph height (11px) — gives clear gap between z's
 #define ZZZ_COUNT   3
-// ZZZ_CYCLE: long enough for all z's to complete travel.
-// Last z (i=2) exits top when zPos ≈ SPRITE_H_PX + 2*ZZZ_STEP ≈ 110.
-// 132 adds a short pause before restart.
-#define ZZZ_CYCLE  132
+// ZZZ_CYCLE must be divisible by ZZZ_STEP; 6 steps = full snake + pause before restart.
+#define ZZZ_CYCLE  168  // 6 * ZZZ_STEP
 
 static void drawZzz(TFT_eSPI& tft, uint16_t newPos, uint16_t prevPos) {
   int sx      = spriteX(tft);
@@ -101,8 +101,7 @@ static void drawZzz(TFT_eSPI& tft, uint16_t newPos, uint16_t prevPos) {
   int leftCX   = sx - halfGap;                          // centre of left gap
   int maxDrift = max(4, halfGap / 4);                  // outward drift over full travel
 
-  tft.setTextFont(2);
-  tft.setTextSize(2);
+  tft.setFreeFont(&FreeMonoBold12pt7b);
   tft.setTextDatum(TC_DATUM);
 
   // Erase previous positions
@@ -128,7 +127,6 @@ static void drawZzz(TFT_eSPI& tft, uint16_t newPos, uint16_t prevPos) {
     tft.drawString("z", rightCX + drift, y);
     if (horiz) tft.drawString("z", leftCX - drift, y);
   }
-  tft.setTextSize(1);
 }
 
 // ── Draw the status bar ────────────────────────────────────────────────────
@@ -142,45 +140,39 @@ static void drawStatusBar(TFT_eSPI& tft, State state, const char* toolName) {
   tft.fillRect(0, sy, sw, sh, COLOR_BG);
   tft.setTextDatum(TC_DATUM);
 
-  // State label — font 2 × textSize 2 ≈ 32px (bigger than old font 4)
-  tft.setTextFont(2);
-  tft.setTextSize(2);
+  // State label — FreeMonoBold18pt (~35px line height)
+  tft.setFreeFont(&FreeMonoBold18pt7b);
 
   switch (state) {
     case State::WORKING: {
       tft.setTextColor(COLOR_CRAB, COLOR_BG);
-      tft.drawString("WORKING", cx, sy + 6);
+      tft.drawString("WORKING", cx, sy + 4);
 
-      // Tool name line — font 4
-      tft.setTextSize(1);
-      tft.setTextFont(4);
+      tft.setFreeFont(&FreeMonoBold12pt7b);
       static const char* SPINNER[] = {"|", "/", "-", "\\"};
       String toolLine = String(SPINNER[frame % 4]) + " " + String(toolName);
       tft.setTextColor(COLOR_GREEN, COLOR_BG);
-      tft.drawString(toolLine.c_str(), cx, sy + sh / 2 + 4);
+      tft.drawString(toolLine.c_str(), cx, sy + 40);
       break;
     }
     case State::WAITING:
     case State::WAITING_URGENT: {
       tft.setTextColor(COLOR_AMBER, COLOR_BG);
-      tft.drawString("WAITING", cx, sy + 6);
-      tft.setTextSize(1);
-      tft.setTextFont(4);
+      tft.drawString("WAITING", cx, sy + 4);
+      tft.setFreeFont(&FreeMonoBold12pt7b);
       tft.setTextColor(COLOR_AMBER, COLOR_BG);
-      tft.drawString("needs your input", cx, sy + sh / 2 + 4);
+      tft.drawString("needs your input", cx, sy + 40);
       break;
     }
     case State::IDLE: {
       tft.setTextColor(COLOR_ZZZ, COLOR_BG);
-      tft.drawString("IDLE", cx, sy + 6);
-      tft.setTextSize(1);
-      tft.setTextFont(4);
+      tft.drawString("IDLE", cx, sy + 4);
+      tft.setFreeFont(&FreeMonoBold12pt7b);
       tft.setTextColor(0x4444, COLOR_BG);
-      tft.drawString("sleeping...", cx, sy + sh / 2 + 4);
+      tft.drawString("sleeping...", cx, sy + 40);
       break;
     }
   }
-  tft.setTextSize(1);
 }
 
 #define COLOR_NOTIF  0x001F   // pure blue RGB565
