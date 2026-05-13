@@ -1,2 +1,4 @@
-pyserial>=3.5
+rumps>=0.4.0
+bleak>=0.21.0
+py2app>=0.28.0
 pytest>=7.0

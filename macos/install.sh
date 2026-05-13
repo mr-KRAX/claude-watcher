@@ -1,63 +1,48 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SETTINGS_FILE="$HOME/.claude/settings.json"
-VENV="$SCRIPT_DIR/.venv"
+cd "$SCRIPT_DIR"
 
-# Create venv and install pyserial if not already present
-if [ ! -x "$VENV/bin/python" ]; then
-  echo "Creating virtualenv at $VENV..."
-  python3 -m venv "$VENV"
-fi
-if ! "$VENV/bin/python" -c "import serial" 2>/dev/null; then
-  echo "Installing pyserial..."
-  "$VENV/bin/pip" install --quiet pyserial
-fi
+echo "==> Installing dependencies..."
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -q -r requirements.txt
 
-PYTHON="$VENV/bin/python"
+echo "==> Building ClaudeWatcher.app..."
+rm -rf build dist
+python setup.py py2app 2>&1 | tail -10
 
-if [ ! -f "$SETTINGS_FILE" ]; then
-  mkdir -p "$(dirname "$SETTINGS_FILE")"
-  echo '{}' > "$SETTINGS_FILE"
-fi
+APP_SRC="$SCRIPT_DIR/dist/ClaudeWatcher.app"
+APP_DST="/Applications/ClaudeWatcher.app"
 
-"$PYTHON" - "$SETTINGS_FILE" "$SCRIPT_DIR" "$PYTHON" <<'PYEOF'
-import sys, json
+echo "==> Installing to /Applications..."
+rm -rf "$APP_DST"
+cp -r "$APP_SRC" "$APP_DST"
 
-settings_path = sys.argv[1]
-scripts_dir = sys.argv[2]
-python_bin = sys.argv[3]
+PLIST_DIR="$HOME/Library/LaunchAgents"
+PLIST="$PLIST_DIR/com.kraalex.claude-watcher.plist"
+mkdir -p "$PLIST_DIR"
 
-with open(settings_path) as f:
-    settings = json.load(f)
+cat > "$PLIST" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.kraalex.claude-watcher</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Applications/ClaudeWatcher.app/Contents/MacOS/ClaudeWatcher</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+</dict>
+</plist>
+EOF
 
-hooks = settings.setdefault("hooks", {})
-
-def make_entry(script):
-    return {
-        "matcher": ".*",
-        "hooks": [{"type": "command", "command": f"{python_bin} {scripts_dir}/{script}"}]
-    }
-
-def upsert(hook_list, script):
-    """Add entry if missing; update command if present but using wrong python."""
-    expected_cmd = f"{python_bin} {scripts_dir}/{script}"
-    for entry in hook_list:
-        cmd = next(iter(entry.get("hooks") or []), {}).get("command", "")
-        if cmd.endswith(script):
-            if cmd != expected_cmd:
-                entry["hooks"][0]["command"] = expected_cmd
-            return
-    hook_list.append(make_entry(script))
-
-upsert(hooks.setdefault("PreToolUse", []), "on_pre_tool.py")
-upsert(hooks.setdefault("Stop", []),        "on_stop.py")
-upsert(hooks.setdefault("Notification", []), "on_notification.py")
-
-with open(settings_path, "w") as f:
-    json.dump(settings, f, indent=2)
-    f.write("\n")
-
-print(f"Hooks installed to {settings_path}")
-PYEOF
+launchctl unload "$PLIST" 2>/dev/null || true
+launchctl load "$PLIST"
+echo "==> Done. ClaudeWatcher is running and will start on login."
