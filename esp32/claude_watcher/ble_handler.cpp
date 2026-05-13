@@ -28,7 +28,7 @@ class CharCallbacks : public NimBLECharacteristicCallbacks {
 };
 
 class ServerCallbacks : public NimBLEServerCallbacks {
-    void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override {
+    void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override {
         Serial.println("[BLE] Disconnected — restarting advertising");
         NimBLEDevice::getAdvertising()->start();
     }
