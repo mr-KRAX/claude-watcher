@@ -23,12 +23,20 @@ class CharCallbacks : public NimBLECharacteristicCallbacks {
     }
 };
 
+class ServerCallbacks : public NimBLEServerCallbacks {
+    void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override {
+        Serial.println("[BLE] Disconnected — restarting advertising");
+        NimBLEDevice::getAdvertising()->start();
+    }
+};
+
 void bleInit(BLEStateCallback callback) {
     g_callback = callback;
 
     NimBLEDevice::init("ClaudeWatcher");
 
     NimBLEServer* pServer = NimBLEDevice::createServer();
+    pServer->setCallbacks(new ServerCallbacks());
 
     NimBLEService* pService = pServer->createService(SERVICE_UUID);
 
