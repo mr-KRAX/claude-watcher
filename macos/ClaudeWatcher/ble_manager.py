@@ -25,8 +25,8 @@ class BLEManager:
         while True:
             self._on_status("Scanning…")
             device = await BleakScanner.find_device_by_filter(
-                lambda d, _: SERVICE_UUID.lower() in [
-                    str(s).lower() for s in (d.metadata.get("uuids") or [])
+                lambda d, adv: SERVICE_UUID.lower() in [
+                    s.lower() for s in adv.service_uuids
                 ],
                 timeout=5.0,
             )
