@@ -2,8 +2,9 @@
 #include "ble_handler.h"
 #include "display.h"
 
-#define SERIAL_BAUD     115200
-#define IDLE_TIMEOUT_MS (5UL * 60UL * 1000UL)
+#define SERIAL_BAUD       115200
+#define IDLE_TIMEOUT_MS   (5UL * 60UL * 1000UL)
+#define NOTIF_TIMEOUT_MS  (2UL * 60UL * 1000UL)
 
 // ── Button (IO14, active-low) ──────────────────────────────────────────────
 #define BTN_PIN          14
@@ -16,18 +17,24 @@ State    currentState    = State::IDLE;
 char     toolName[32]    = "";
 uint32_t lastMsgMs       = 0;
 uint8_t  currentRotation = 0;
+uint32_t notifStartMs    = 0;   // 0 = no active notification
 
 // Button state
 static bool     btnLast     = HIGH;
 static uint8_t  clickCount  = 0;
 static uint32_t lastClickMs = 0;
 
-// BLE callback — runs on NimBLE FreeRTOS task
+// BLE callbacks — run on NimBLE FreeRTOS task
 static void onBLEState(State state, const char* tool) {
+    notifStartMs = 0;   // any state message clears the notification
     currentState = state;
     strncpy(toolName, tool, sizeof(toolName) - 1);
     toolName[sizeof(toolName) - 1] = '\0';
     lastMsgMs = millis();
+}
+
+static void onBLENotif() {
+    notifStartMs = millis();
 }
 
 static bool pollButton(uint32_t now) {
@@ -51,7 +58,7 @@ void setup() {
     Serial.begin(SERIAL_BAUD);
     pinMode(BTN_PIN, INPUT_PULLUP);
     displayInit(tft);
-    bleInit(onBLEState);
+    bleInit(onBLEState, onBLENotif);
     lastMsgMs = millis();
 }
 
@@ -68,5 +75,6 @@ void loop() {
         toolName[0] = '\0';
     }
 
-    displayUpdate(tft, currentState, toolName, now);
+    bool notifActive = (notifStartMs != 0 && (now - notifStartMs) < NOTIF_TIMEOUT_MS);
+    displayUpdate(tft, currentState, toolName, now, notifActive);
 }
