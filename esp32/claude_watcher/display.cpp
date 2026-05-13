@@ -5,7 +5,7 @@
 // Animation intervals (ms)
 #define ANIM_WORKING_MS   300
 #define ANIM_WAITING_MS   500
-#define ANIM_IDLE_MS     1000
+#define ANIM_IDLE_MS      500
 
 // Internal state
 static State      lastState     = State::IDLE;
@@ -90,16 +90,20 @@ static void drawBang(TFT_eSPI& tft, bool visible) {
 #define ZZZ_CYCLE  132
 
 static void drawZzz(TFT_eSPI& tft, uint16_t newPos, uint16_t prevPos) {
-  int sx     = spriteX(tft);
-  int sy     = spriteY(tft);
-  int rightX = sx + SPRITE_W + 4;
-  int leftX  = sx - 18;   // TL_DATUM; ~14px wide char, 4px gap from crab
-  int baseY  = sy + SPRITE_H_PX - 4;
-  bool horiz = (tft.getRotation() % 2 == 1);
+  int sx      = spriteX(tft);
+  int sy      = spriteY(tft);
+  int baseY   = sy + SPRITE_H_PX - 4;
+  bool horiz  = (tft.getRotation() % 2 == 1);
+
+  // Center each z in its gap (TC_DATUM); drift outward as it rises
+  int halfGap  = (tft.width() - sx - SPRITE_W) / 2;  // = left gap = right gap
+  int rightCX  = sx + SPRITE_W + halfGap;              // centre of right gap
+  int leftCX   = sx - halfGap;                          // centre of left gap
+  int maxDrift = max(4, halfGap / 4);                  // outward drift over full travel
 
   tft.setTextFont(2);
   tft.setTextSize(2);
-  tft.setTextDatum(TL_DATUM);
+  tft.setTextDatum(TC_DATUM);
 
   // Erase previous positions
   tft.setTextColor(COLOR_BG, COLOR_BG);
@@ -107,10 +111,10 @@ static void drawZzz(TFT_eSPI& tft, uint16_t newPos, uint16_t prevPos) {
     int yOff = (int)prevPos - i * ZZZ_STEP;
     if (yOff < 0) continue;
     int y = baseY - yOff;
-    if (y >= sy && y < sy + SPRITE_H_PX) {
-      tft.drawString("z", rightX, y);
-      if (horiz) tft.drawString("z", leftX, y);
-    }
+    if (y < sy || y >= sy + SPRITE_H_PX) continue;
+    int drift = yOff * maxDrift / (SPRITE_H_PX - 4);
+    tft.drawString("z", rightCX + drift, y);
+    if (horiz) tft.drawString("z", leftCX - drift, y);
   }
 
   // Draw at new positions
@@ -119,10 +123,10 @@ static void drawZzz(TFT_eSPI& tft, uint16_t newPos, uint16_t prevPos) {
     int yOff = (int)newPos - i * ZZZ_STEP;
     if (yOff < 0) continue;
     int y = baseY - yOff;
-    if (y >= sy && y < sy + SPRITE_H_PX) {
-      tft.drawString("z", rightX, y);
-      if (horiz) tft.drawString("z", leftX, y);
-    }
+    if (y < sy || y >= sy + SPRITE_H_PX) continue;
+    int drift = yOff * maxDrift / (SPRITE_H_PX - 4);
+    tft.drawString("z", rightCX + drift, y);
+    if (horiz) tft.drawString("z", leftCX - drift, y);
   }
   tft.setTextSize(1);
 }
@@ -188,8 +192,9 @@ static void drawNotifBorder(TFT_eSPI& tft, bool visible) {
   int thick = 4;
   tft.fillRect(0,          0,          w,     thick, color);  // top
   tft.fillRect(0,          h - thick,  w,     thick, color);  // bottom
-  tft.fillRect(0,          0,          thick, h,     color);  // left
-  tft.fillRect(w - thick,  0,          thick, h,     color);  // right
+  int ch = crabAreaH(tft);
+  tft.fillRect(0,          0,          thick, ch,    color);  // left (crab area only)
+  tft.fillRect(w - thick,  0,          thick, ch,    color);  // right (crab area only)
 }
 
 // ── Public API ─────────────────────────────────────────────────────────────
@@ -198,7 +203,6 @@ void displayInit(TFT_eSPI& tft) {
   tft.init();
   tft.setRotation(1);
   tft.fillScreen(COLOR_BG);
-  tft.drawFastHLine(0, statusY(tft) - 1, tft.width(), 0x2104);  // dark grey separator
   drawSprite(tft, (const char**)IDLE_F);
   drawZzz(tft, 0, 0);
   drawStatusBar(tft, State::IDLE, "");
@@ -277,7 +281,7 @@ void displayUpdate(TFT_eSPI& tft, State state, const char* toolName, uint32_t no
       drawSprite(tft, (const char**)IDLE_F);
       {
         uint16_t prevPos = zPos;
-        zPos = (zPos + 1) % ZZZ_CYCLE;
+        zPos = (zPos + ZZZ_STEP) % ZZZ_CYCLE;
         drawZzz(tft, zPos, prevPos);
       }
       break;
