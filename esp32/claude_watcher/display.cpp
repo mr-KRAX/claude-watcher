@@ -134,11 +134,11 @@ static void drawStatusBar(TFT_eSPI& tft, State state, const char* toolName) {
   int sw  = tft.width();
   int cx  = sw / 2;
 
-  // Clear status area
-  tft.fillRect(0, sy, sw, sh, COLOR_BG);
   tft.setTextDatum(TC_DATUM);
 
   // State label — FreeMonoBold18pt (~35px line height)
+  // All text drawn with setTextColor(fg, COLOR_BG) so each glyph fills its own background.
+  // No full-bar clear here — callers clear the status area on state changes.
   tft.setFreeFont(&FreeMonoBold18pt7b);
 
   switch (state) {
@@ -146,6 +146,8 @@ static void drawStatusBar(TFT_eSPI& tft, State state, const char* toolName) {
       tft.setTextColor(COLOR_CRAB, COLOR_BG);
       tft.drawString("WORKING", cx, sy - 6);
 
+      // Clear only the subtitle strip: tool name width varies, bg-fill alone isn't enough
+      tft.fillRect(0, sy + 26, sw, sh - 26, COLOR_BG);
       tft.setFreeFont(&FreeMonoBold12pt7b);
       static const char* SPINNER[] = {"|", "/", "-", "\\"};
       String toolLine = String(SPINNER[frame % 4]) + " " + String(toolName);
@@ -183,8 +185,8 @@ static void drawNotifBorder(TFT_eSPI& tft, bool visible) {
   tft.fillRect(0,          0,          w,     thick, color);  // top
   tft.fillRect(0,          h - thick,  w,     thick, color);  // bottom
   int ch = crabAreaH(tft);
-  tft.fillRect(0,          0,          thick, ch,    color);  // left (crab area only)
-  tft.fillRect(w - thick,  0,          thick, ch,    color);  // right (crab area only)
+  tft.fillRect(0,          0,          thick, h,    color);  // left (crab area only)
+  tft.fillRect(w - thick,  0,          thick, h,    color);  // right (crab area only)
 }
 
 // ── Public API ─────────────────────────────────────────────────────────────
@@ -201,7 +203,6 @@ void displayInit(TFT_eSPI& tft) {
 void displaySetRotation(TFT_eSPI& tft, uint8_t rotation, State state, const char* toolName) {
   tft.setRotation(rotation);
   tft.fillScreen(COLOR_BG);
-  tft.drawFastHLine(0, statusY(tft) - 1, tft.width(), 0x2104);
   frame = 0;
   bangVisible = false;
   zPos = 0;
@@ -238,6 +239,7 @@ void displayUpdate(TFT_eSPI& tft, State state, const char* toolName, uint32_t no
 
   if (stateChanged) {
     tft.fillRect(0, 0, tft.width(), crabAreaH(tft), COLOR_BG);
+    tft.fillRect(0, statusY(tft), tft.width(), statusH(tft), COLOR_BG);
     frame = 0;
     bangVisible = false;
     zPos = 0;
