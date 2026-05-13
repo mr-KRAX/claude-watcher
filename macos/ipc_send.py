@@ -7,9 +7,10 @@ SOCK_PATH = "/tmp/claude-watcher.sock"
 
 def send(message: str):
     """Send an ASCII message to ClaudeWatcher.app via Unix socket. Silent fail."""
+    print(f"[claude-watcher] → {message}")
     try:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
             s.connect(SOCK_PATH)
             s.sendall(message.encode("utf-8"))
     except Exception as e:
-        print(f"claude-watcher: {e}", file=sys.stderr)
+        print(f"[claude-watcher] error: {e}", file=sys.stderr)
