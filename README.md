@@ -4,9 +4,9 @@ A physical status monitor for [Claude Code](https://docs.anthropic.com/en/docs/c
 
 ```
     ┌─────────────────┐         BLE          ┌──────────────────┐
-    │  macOS Menu Bar  │ ──────────────────── │  ESP32 + Display  │
-    │  ClaudeWatcher   │                      │  Pixel-Art Crab   │
-    └────────┬────────┘                       └──────────────────┘
+    │  macOS Menu Bar │ ──────────────────── │  ESP32 + Display │
+    │  ClaudeWatcher  │                      │  Pixel-Art Crab  │
+    └────────┬────────┘                      └──────────────────┘
              │
     Claude Code Hooks
     (tool use, prompts,
@@ -17,66 +17,10 @@ A physical status monitor for [Claude Code](https://docs.anthropic.com/en/docs/c
 
 The crab has three animated states, plus a notification overlay:
 
-### Working
-
-Claude is executing a tool. The crab walks — legs alternate every 300ms. The status bar shows the current tool name with a spinning indicator.
-
-```
-                          ┌───────────────────┐
-   . . . . . . . . . .   │                   │
-   . . C C C C C C . .   │   . . C C C C C C │
-   . . C E C E C C . .   │   . . C E C E C C │
-   . . C E C E C C . .   │   . . C E C E C C │
-   C C C C C C C C C C   │   C C C C C C C C │
-   . . C C C C C C . .   │   . . C C C C C C │
-   . . . C C . C C . .   │   . . . C C . C C │
-   . . . C C . C C . .   │   . . C C . . C C │
-   . . . . . . . . . .   │                   │
-                          │  WORKING  | Bash  │
-                          └───────────────────┘
-```
-
-### Waiting
-
-Claude needs your input. Claws raised, alert orange eyes, blinking `!!` above the head.
-
-```
-                          ┌───────────────────┐
-   C C . . . . . . C C   │         !!        │
-   . . C C C C C C . .   │   C C . . . . C C │
-   . . C A C A C C . .   │   . . C C C C C C │
-   . . C A C A C C . .   │   . . C A C A C C │
-   . . C C C C C C . .   │   . . C C C C C C │
-   . . C C C C C C . .   │   . . C C C C C C │
-   . . . C C . C C . .   │   . . . C C . C C │
-   . . . C C . C C . .   │                   │
-   . . . . . . . . . .   │  WAITING          │
-                          │  needs your input │
-                          └───────────────────┘
-```
-
-### Idle
-
-No activity for 5 minutes. The crab dims and falls asleep. Floating `z` characters drift upward in a snake pattern.
-
-```
-                          ┌───────────────────┐
-   . . . . . . . . . .   │              z    │
-   . . D D D D D D . .   │            z      │
-   . . D D D D D D . .   │          z        │
-   . . D — D — D D . .   │   . . D D D D D D │
-   D D D D D D D D D D   │   . . D D D D D D │
-   . . D D D D D D . .   │   . . D — D — D D │
-   . . . D D . D D . .   │   D D D D D D D D │
-   . . . D D . D D . .   │   . . D D D D D D │
-   . . . . . . . . . .   │                   │
-                          │  IDLE sleeping... │
-                          └───────────────────┘
-```
-
-### Notification
-
-A blinking blue 4px border appears around the entire screen for 2 minutes (or until the next state change). Overlays any active state.
+| Working | Waiting | Idle | Notification |
+|:---:|:---:|:---:|:---:|
+| ![Working](docs/images/state-working.png) | ![Waiting](docs/images/state-waiting.png) | ![Idle](docs/images/state-idle.png) | ![Notification](docs/images/state-notification.png) |
+| Crab walks, legs alternate 300ms. Status bar shows current tool. | Claws raised, orange alert eyes, blinking `!!` above head. | Dimmed crab, closed eyes. Floating `z` drift upward. | Blue 4px border blinks for 2 min. Overlays any state. |
 
 ## Hardware
 
@@ -89,8 +33,8 @@ A blinking blue 4px border appears around the entire screen for 2 minutes (or un
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                     Claude Code                          │
-│  hooks: PreToolUse, PostToolUse, Notification, Stop ...  │
+│                     Claude Code                         │
+│  hooks: PreToolUse, PostToolUse, Notification, Stop ... │
 └──────────────────────────┬──────────────────────────────┘
                            │ Python hook scripts
                            v
@@ -131,7 +75,7 @@ Plain ASCII messages over a single BLE characteristic:
 
 ## Project Structure
 
-```
+```text
 claude-watcher/
 ├── esp32/claude_watcher/       # ESP32 firmware (Arduino)
 │   ├── claude_watcher.ino      # Main loop, state machine
