@@ -17,10 +17,25 @@ A physical status monitor for [Claude Code](https://docs.anthropic.com/en/docs/c
 
 The crab has three animated states, plus a notification overlay:
 
-| Working | Waiting | Idle | Notification |
-|:---:|:---:|:---:|:---:|
-| ![Working](docs/images/state-working.png) | ![Waiting](docs/images/state-waiting.png) | ![Idle](docs/images/state-idle.png) | ![Notification](docs/images/state-notification.png) |
-| Crab walks, legs alternate 300ms. Status bar shows current tool. | Claws raised, orange alert eyes, blinking `!!` above head. | Dimmed crab, closed eyes. Floating `z` drift upward. | Blue 4px border blinks for 2 min. Overlays any state. |
+### Working
+Crab walks — legs alternate every 300ms. The status bar shows the current tool name with a spinning indicator.
+
+![Working](docs/images/state-working.png)
+
+### Waiting
+Claws raised, orange alert eyes, blinking `!!` above the head. Claude needs your input.
+
+![Waiting](docs/images/state-waiting.png)
+
+### Idle
+No activity for 5 minutes. Dimmed crab with closed eyes. Floating `z` characters drift upward.
+
+![Idle](docs/images/state-idle.png)
+
+### Notification
+Blue 4px border blinks around the screen for 2 minutes. Overlays any active state.
+
+![Notification](docs/images/state-notification.png)
 
 ## Hardware
 
