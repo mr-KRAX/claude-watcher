@@ -13,3 +13,13 @@ venv/
 
 # Arduino build artifacts
 esp32/claude_watcher/build/
+
+# macOS build artifacts
+macos/build/
+macos/dist/
+
+# Superpowers docs
+docs/superpowers/
+
+# Python version
+.python-version

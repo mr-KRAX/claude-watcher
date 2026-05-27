@@ -184,9 +184,8 @@ static void drawNotifBorder(TFT_eSPI& tft, bool visible) {
   int thick = 4;
   tft.fillRect(0,          0,          w,     thick, color);  // top
   tft.fillRect(0,          h - thick,  w,     thick, color);  // bottom
-  int ch = crabAreaH(tft);
-  tft.fillRect(0,          0,          thick, h,    color);  // left (crab area only)
-  tft.fillRect(w - thick,  0,          thick, h,    color);  // right (crab area only)
+  tft.fillRect(0,          0,          thick, h,    color);  // left
+  tft.fillRect(w - thick,  0,          thick, h,    color);  // right
 }
 
 // ── Public API ─────────────────────────────────────────────────────────────
